@@ -1,0 +1,14 @@
+#Java
+*.class
+*.jar
+
+#IntelliJ
+*.iml
+.idea
+out/
+
+#Apple
+.DS_Store
+
+#Backups
+*~
