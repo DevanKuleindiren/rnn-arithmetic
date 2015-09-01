@@ -42,6 +42,16 @@ public class Matrix implements Cloneable {
         }
     }
 
+    public static Matrix onesMatrix (int height, int width) {
+        Matrix result = new Matrix(height, width);
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                result.set(row, col, 1);
+            }
+        }
+        return result;
+    }
+
     public Matrix add (Matrix toAdd) throws MatrixDimensionMismatchException {
         if (height == toAdd.height && width == toAdd.width) {
             Matrix result = new Matrix(height, width);
@@ -54,6 +64,10 @@ public class Matrix implements Cloneable {
         } else {
             throw new MatrixDimensionMismatchException("addition");
         }
+    }
+
+    public Matrix subtract (Matrix toSubtract) throws MatrixDimensionMismatchException {
+        return add(toSubtract.scalarMultiply(-1.0));
     }
 
     public Matrix multiply (Matrix toMultiply) throws MatrixDimensionMismatchException {
@@ -125,6 +139,16 @@ public class Matrix implements Cloneable {
         }
         for (int row = 0; row < height; row++) {
             result.values[row][width] = -1;
+        }
+        return result;
+    }
+
+    public Matrix removeBiasRow () {
+        Matrix result = new Matrix(height - 1, width);
+        for (int row = 0; row < height - 1; row++) {
+            for (int col = 0; col < width; col++) {
+                result.values[row][col] = values[row][col];
+            }
         }
         return result;
     }

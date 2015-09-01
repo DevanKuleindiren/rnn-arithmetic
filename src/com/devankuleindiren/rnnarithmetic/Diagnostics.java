@@ -19,4 +19,26 @@ public class Diagnostics {
         System.out.println();
         System.out.println();
     }
+
+    public static void printMatrix (Matrix matrix, String name) {
+        System.out.println();
+        System.out.println(name.toUpperCase());
+        for (int row = 0; row < matrix.getHeight(); row++) {
+            for (int col = 0; col < matrix.getWidth(); col++) {
+                if (row == 0 && col == 0) {
+                    System.out.print("[" + matrix.get(row, col));
+                } else if (col != 0){
+                    System.out.print(", " + matrix.get(row, col));
+                } else {
+                    System.out.print(matrix.get(row, col));
+                }
+            }
+            if (row == matrix.getHeight() - 1) {
+                System.out.print("]");
+            } else {
+                System.out.println("; ");
+            }
+        }
+        System.out.println();
+    }
 }
