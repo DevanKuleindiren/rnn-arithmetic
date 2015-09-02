@@ -1,6 +1,5 @@
 #Java
 *.class
-*.jar
 
 #IntelliJ
 *.iml

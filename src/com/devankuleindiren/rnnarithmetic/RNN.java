@@ -5,7 +5,7 @@ package com.devankuleindiren.rnnarithmetic;
  */
 public class RNN {
 
-    // THE NUMBER OF NODES IN EACH LAYER
+    // THE NUMBER OF NODES IN EACH LAYER, EXCLUDING BIAS NODES
     private static int inputNodesNo;
     private static int hiddenNeuronNo;
     private static int outputNeuronNo;
@@ -52,6 +52,10 @@ public class RNN {
         fillRandom(weightsIH, inputNodesNo + 1);
         fillRandom(weightsHH, hiddenNeuronNo);
         fillRandom(weightsHO, hiddenNeuronNo);
+
+//        fillRandom(weightsIH, 100);
+//        fillRandom(weightsHH, 100);
+//        fillRandom(weightsHO, 100);
     }
 
     // TRAIN THE RNN
@@ -85,6 +89,9 @@ public class RNN {
 
             // COMPUTE DELTA Os AND OUTPUT ERROR
             deltaO[0] = new Matrix(new double[1][outputNeuronNo]);
+
+            error = 0;
+
             for (int t = 1; t < inputs.length; t++) {
 
                 // COMPUTE OUTPUT ERROR

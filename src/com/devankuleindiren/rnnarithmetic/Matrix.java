@@ -130,6 +130,18 @@ public class Matrix implements Cloneable {
         }
     }
 
+    public void rectify () {
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                if (values[row][col] >= 0.5) {
+                    values[row][col] = 1;
+                } else {
+                    values[row][col] = 0;
+                }
+            }
+        }
+    }
+
     public Matrix addBiasColumn () {
         Matrix result = new Matrix(height, width + 1);
         for (int row = 0; row < height; row++) {

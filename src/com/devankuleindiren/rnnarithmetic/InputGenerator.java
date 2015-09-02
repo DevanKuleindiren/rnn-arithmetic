@@ -53,4 +53,62 @@ public class InputGenerator {
 
         return inputsAndTargets;
     }
+
+    public static Matrix[][] generateInput (String input1, String input2) {
+
+        Matrix[][] inputsAndTargets = new Matrix[2][input1.length() + 1];
+
+        // NOTE: THIS INPUT-TARGET PAIR IS NEVER USED IN THE TRAINING OF THE RNN
+        // THE ONLY THING DEFINED AT t = 0 IS THE HIDDEN ACTIVATIONS
+        inputsAndTargets[0][0] = new Matrix(new double[1][3]);
+        inputsAndTargets[1][0] = new Matrix(new double[1][1]);
+
+        char[] inputs1 = input1.toCharArray();
+        char[] inputs2 = input2.toCharArray();
+
+        int bit1, bit2;
+        int carry = 0;
+
+        for (int count = 1; count <= input1.length(); count++) {
+
+            int charIndex = input1.length() - count;
+
+            if (inputs1[charIndex] == '1') {
+                bit1 = 1;
+            } else {
+                bit1 = 0;
+            }
+
+            if (inputs2[charIndex] == '1') {
+                bit2 = 1;
+            } else {
+                bit2 = 0;
+            }
+
+            inputsAndTargets[0][count] = new Matrix(1, 3);
+            inputsAndTargets[0][count].set(0, 0, bit1);
+            inputsAndTargets[0][count].set(0, 1, bit2);
+            inputsAndTargets[0][count].set(0, 2, -1);
+
+            inputsAndTargets[1][count] = new Matrix(1, 1);
+            if ((bit1 == 1 && bit2 == 0 && carry == 0) ||
+                    (bit1 == 0 && bit2 == 1 && carry == 0) ||
+                    (bit1 == 0 && bit2 == 0 && carry == 1) ||
+                    (bit1 == 1 && bit2 == 1 && carry == 1)) {
+                inputsAndTargets[1][count].set(0, 0, 1);
+            } else {
+                inputsAndTargets[1][count].set(0, 0, 0);
+            }
+
+            if ((bit1 == 1 && bit2 == 1) ||
+                    (bit1 == 1 && carry == 1) ||
+                    (bit2 == 1 && carry == 1)) {
+                carry = 1;
+            } else {
+                carry = 0;
+            }
+        }
+
+        return inputsAndTargets;
+    }
 }
