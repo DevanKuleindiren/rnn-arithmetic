@@ -20,3 +20,13 @@ At the start, the RNN knows absolutely nothing about binary addition. However, a
 This RNN uses back propagation through time (BPTT) for training, and has the following structure:
 
 ![Structure](http://www.devankuleindiren.com/Images/RNN-Arithmetic.png "RNN Structure")
+
+##Usage
+1. Download the [jar file](RNN-Arithmetic.jar).
+2. In the directory containing the jar file, run:
+
+    ```
+    java -jar RNN-Arithmetic.jar
+    ```
+
+3. Enter `help` to view the list of available commands.
