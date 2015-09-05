@@ -79,67 +79,77 @@ public class RNN {
         // ERROR MEASURE
         double error = 0;
 
-        for (int iteration = 0; iteration < iterationNo; iteration++) {
+        // SUCCESS BOOLEAN
+        boolean trainSuccessful = false;
 
-            // PERFORM A FORWARD PASS THROUGH THE RNN
-            // STORE ALL ACTIVATIONS ALONG THE WAY
-            hiddenActivations = inputToHidden(inputs);
-            outputActivations = hiddenToOutput(hiddenActivations);
+        while (!trainSuccessful) {
+            for (int iteration = 0; iteration < iterationNo; iteration++) {
 
-            // CREATE REQUIRED MATRICES FILLED WITH ONES
-            Matrix outputOnes = Matrix.onesMatrix(1, outputNeuronNo);
-            Matrix hiddenOnes = Matrix.onesMatrix(1, hiddenNeuronNo);
+                // PERFORM A FORWARD PASS THROUGH THE RNN
+                // STORE ALL ACTIVATIONS ALONG THE WAY
+                hiddenActivations = inputToHidden(inputs);
+                outputActivations = hiddenToOutput(hiddenActivations);
 
-            // COMPUTE DELTA Os AND OUTPUT ERROR
-            deltaO[0] = new Matrix(new double[1][outputNeuronNo]);
+                // CREATE REQUIRED MATRICES FILLED WITH ONES
+                Matrix outputOnes = Matrix.onesMatrix(1, outputNeuronNo);
+                Matrix hiddenOnes = Matrix.onesMatrix(1, hiddenNeuronNo);
 
-            error = 0;
+                // COMPUTE DELTA Os AND OUTPUT ERROR
+                deltaO[0] = new Matrix(new double[1][outputNeuronNo]);
 
-            for (int t = 1; t < inputs.length; t++) {
+                error = 0;
 
-                // COMPUTE OUTPUT ERROR
-                if (iteration % 10 == 0) {
+                for (int t = 1; t < inputs.length; t++) {
+
+                    // COMPUTE OUTPUT ERROR
                     for (int k = 0; k < outputNeuronNo; k++) {
                         error += Math.pow(targets[t].get(0, k) - outputActivations[t].get(0, k), 2);
                     }
+
+
+                    // COMPUTE DELTA O^T
+                    deltaO[t] = targets[t].subtract(outputActivations[t]).multiplyEach(outputActivations[t]).multiplyEach(outputOnes.subtract(outputActivations[t])).scalarMultiply(-1.0);
                 }
 
-                // COMPUTE DELTA O^T
-                deltaO[t] = targets[t].subtract(outputActivations[t]).multiplyEach(outputActivations[t]).multiplyEach(outputOnes.subtract(outputActivations[t])).scalarMultiply(-1.0);
+                // OCCASIONALLY DISPLAY ERROR
+                if (iteration % 10 == 0) {
+                    System.out.println("Error measure: " + error);
+                }
+
+                // COMPUTE DELTA Hs
+                int T = inputs.length - 1;
+                Matrix weightsHOWithoutBias = weightsHO.removeBiasRow();
+                deltaH[T] = hiddenActivations[T].multiplyEach(hiddenOnes.subtract(hiddenActivations[T])).multiplyEach(deltaO[T].multiply(weightsHOWithoutBias.transpose()));
+                for (int t = inputs.length - 2; t > 0; t--) {
+                    // COMPUTE DELTA H^T
+                    deltaH[t] = hiddenActivations[t].multiplyEach(hiddenOnes.subtract(hiddenActivations[t])).multiplyEach(deltaO[t].multiply(weightsHOWithoutBias.transpose()).add(deltaH[t+1].multiply(weightsHH.transpose())));
+                }
+
+                // COMPUTE ERROR GRADIENTS
+                Matrix dEdWho = new Matrix(new double[weightsHO.getHeight()][weightsHO.getWidth()]);
+                Matrix dEdWhh = new Matrix(new double[weightsHH.getHeight()][weightsHH.getWidth()]);
+                Matrix dEdWih = new Matrix(new double[weightsIH.getHeight()][weightsIH.getWidth()]);
+                for (int t = 1; t < inputs.length; t++) {
+                    dEdWho = dEdWho.add(hiddenActivations[t].addBiasColumn().transpose().multiply(deltaO[t]));
+                    dEdWhh = dEdWhh.add(hiddenActivations[t-1].transpose().multiply(deltaH[t]));
+                    dEdWih = dEdWih.add(inputs[t].transpose().multiply(deltaH[t]));
+                }
+                Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose());
+
+                // UPDATE WEIGHTS FROM HIDDEN TO OUTPUT
+                weightsHO = weightsHO.subtract(dEdWho.scalarMultiply(lR));
+                weightsHH = weightsHH.subtract(dEdWhh.scalarMultiply(lR));
+                weightsIH = weightsIH.subtract(dEdWih.scalarMultiply(lR));
+
+                // UPDATE INITIAL HIDDEN ACTIVATIONS
+                initialHiddenActs = initialHiddenActs.subtract(dEdH0.scalarMultiply(lR));
             }
-
-            // OCCASIONALLY DISPLAY ERROR
-            if (iteration % 10 == 0) {
-                System.out.println("Error measure: " + error);
+            if (error < 0.1) {
+                trainSuccessful = true;
+            } else {
+                System.out.println("Re-trying...");
+                initWeightsAndActs();
             }
-
-            // COMPUTE DELTA Hs
-            int T = inputs.length - 1;
-            Matrix weightsHOWithoutBias = weightsHO.removeBiasRow();
-            deltaH[T] = hiddenActivations[T].multiplyEach(hiddenOnes.subtract(hiddenActivations[T])).multiplyEach(deltaO[T].multiply(weightsHOWithoutBias.transpose()));
-            for (int t = inputs.length - 2; t > 0; t--) {
-                // COMPUTE DELTA H^T
-                deltaH[t] = hiddenActivations[t].multiplyEach(hiddenOnes.subtract(hiddenActivations[t])).multiplyEach(deltaO[t].multiply(weightsHOWithoutBias.transpose()).add(deltaH[t+1].multiply(weightsHH.transpose())));
-            }
-
-            // COMPUTE ERROR GRADIENTS
-            Matrix dEdWho = new Matrix(new double[weightsHO.getHeight()][weightsHO.getWidth()]);
-            Matrix dEdWhh = new Matrix(new double[weightsHH.getHeight()][weightsHH.getWidth()]);
-            Matrix dEdWih = new Matrix(new double[weightsIH.getHeight()][weightsIH.getWidth()]);
-            for (int t = 1; t < inputs.length; t++) {
-                dEdWho = dEdWho.add(hiddenActivations[t].addBiasColumn().transpose().multiply(deltaO[t]));
-                dEdWhh = dEdWhh.add(hiddenActivations[t-1].transpose().multiply(deltaH[t]));
-                dEdWih = dEdWih.add(inputs[t].transpose().multiply(deltaH[t]));
-            }
-            Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose());
-
-            // UPDATE WEIGHTS FROM HIDDEN TO OUTPUT
-            weightsHO = weightsHO.subtract(dEdWho.scalarMultiply(lR));
-            weightsHH = weightsHH.subtract(dEdWhh.scalarMultiply(lR));
-            weightsIH = weightsIH.subtract(dEdWih.scalarMultiply(lR));
-
-            // UPDATE INITIAL HIDDEN ACTIVATIONS
-            initialHiddenActs = initialHiddenActs.subtract(dEdH0.scalarMultiply(lR));
         }
 
         return error;
