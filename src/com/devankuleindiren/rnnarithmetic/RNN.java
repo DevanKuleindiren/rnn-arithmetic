@@ -15,6 +15,9 @@ public class RNN {
     private static Matrix weightsHH; // FROM HIDDEN LAYER TO ITSELF
     private static Matrix weightsHO; // FROM HIDDEN LAYER TO OUTPUT
 
+    // INITIAL HIDDEN ACTIVATIONS
+    private static Matrix initialHiddenActs;
+
     // SINGLETON SO ALL REFERENCES TO THE RNN ARE THE SAME
     private static RNN instance = null;
 
@@ -32,7 +35,9 @@ public class RNN {
             weightsHH = new Matrix(hiddenNeuronNo, hiddenNeuronNo);   // ASSUMING BIAS EXCLUDED IN hiddenNeuronNo
             weightsHO = new Matrix(hiddenNeuronNo + 1, outputNeuronNo);
 
-            initWeights();
+            initialHiddenActs = new Matrix(1, hiddenNeuronNo);
+
+            initWeightsAndActs();
         }
         return instance;
     }
@@ -48,14 +53,12 @@ public class RNN {
     }
 
     // INITIALISE THE WEIGHT ARRAYS
-    public static void initWeights() {
+    public static void initWeightsAndActs () {
         fillRandom(weightsIH, inputNodesNo + 1);
         fillRandom(weightsHH, hiddenNeuronNo);
         fillRandom(weightsHO, hiddenNeuronNo);
 
-//        fillRandom(weightsIH, 100);
-//        fillRandom(weightsHH, 100);
-//        fillRandom(weightsHO, 100);
+        fillRandom(initialHiddenActs, hiddenNeuronNo);
     }
 
     // TRAIN THE RNN
@@ -128,11 +131,15 @@ public class RNN {
                 dEdWhh = dEdWhh.add(hiddenActivations[t-1].transpose().multiply(deltaH[t]));
                 dEdWih = dEdWih.add(inputs[t].transpose().multiply(deltaH[t]));
             }
+            Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose());
 
             // UPDATE WEIGHTS FROM HIDDEN TO OUTPUT
             weightsHO = weightsHO.subtract(dEdWho.scalarMultiply(lR));
             weightsHH = weightsHH.subtract(dEdWhh.scalarMultiply(lR));
             weightsIH = weightsIH.subtract(dEdWih.scalarMultiply(lR));
+
+            // UPDATE INITIAL HIDDEN ACTIVATIONS
+            initialHiddenActs = initialHiddenActs.subtract(dEdH0.scalarMultiply(lR));
         }
 
         return error;
@@ -151,7 +158,7 @@ public class RNN {
     private Matrix[] inputToHidden (Matrix[] inputs) throws MatrixDimensionMismatchException {
 
         Matrix[] hiddenActivations = new Matrix[inputs.length];
-        hiddenActivations[0] = new Matrix(new double[1][hiddenNeuronNo]);
+        hiddenActivations[0] = initialHiddenActs;
 
         for (int time = 1; time < inputs.length; time++) {
             hiddenActivations[time] = inputs[time].multiply(weightsIH).add(hiddenActivations[time - 1].multiply(weightsHH));

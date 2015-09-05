@@ -67,11 +67,11 @@ public class Main {
                         // PAD STRINGS TO EQUAL LENGTH
                         if (arguments[1].length() < arguments[2].length()) {
                             for (int len = arguments[1].length(); len < arguments[2].length(); len++) {
-                                arguments[1] += "0";
+                                arguments[1] = "0" + arguments[1];
                             }
                         } else if (arguments[2].length() < arguments[1].length()) {
                             for (int len = arguments[2].length(); len < arguments[1].length(); len++) {
-                                arguments[2] += "0";
+                                arguments[2] = "0" + arguments[2];
                             }
                         }
                         // GET RNN TO PERFORM ADDITION
