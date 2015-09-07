@@ -40,7 +40,7 @@ public class Main {
                 RNN rnn = RNN.getInstance(2, 3, 1);
 
                 try {
-                    rnn.train(inputBatch, 0.005, 10000);
+                    rnn.train(inputBatch, 0.005, 0.05, 10000);
                 } catch (MatrixDimensionMismatchException e) {
                     System.out.println("Failed to train the RNN:");
                     System.out.println();

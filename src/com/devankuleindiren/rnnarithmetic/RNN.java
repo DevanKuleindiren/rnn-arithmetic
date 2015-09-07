@@ -62,7 +62,7 @@ public class RNN {
     }
 
     // TRAIN THE RNN
-    public double train (Matrix[][] inputTargetPairs, double lR, int iterationNo) throws MatrixDimensionMismatchException {
+    public double train (Matrix[][] inputTargetPairs, double lR, double momentum, int iterationNo) throws MatrixDimensionMismatchException {
 
         System.out.println("\nTraining RNN...\n");
 
@@ -96,6 +96,19 @@ public class RNN {
 
             // INITIALISE DELTA Os
             deltaO[0] = new Matrix(new double[noOfTrainingSequences][outputNeuronNo]);
+
+            // INITIALISE GRADIENT MATRICES
+            Matrix dWho = new Matrix(new double[weightsHO.getHeight()][weightsHO.getWidth()]);
+            Matrix dWhh = new Matrix(new double[weightsHH.getHeight()][weightsHH.getWidth()]);
+            Matrix dWih = new Matrix(new double[weightsIH.getHeight()][weightsIH.getWidth()]);
+
+            Matrix dWhoPrev;
+            Matrix dWhhPrev;
+            Matrix dWihPrev;
+
+            Matrix dEdWho;
+            Matrix dEdWhh;
+            Matrix dEdWih;
 
             for (int iteration = 0; iteration < iterationNo; iteration++) {
 
@@ -135,9 +148,14 @@ public class RNN {
                 }
 
                 // COMPUTE ERROR GRADIENTS
-                Matrix dEdWho = new Matrix(new double[weightsHO.getHeight()][weightsHO.getWidth()]);
-                Matrix dEdWhh = new Matrix(new double[weightsHH.getHeight()][weightsHH.getWidth()]);
-                Matrix dEdWih = new Matrix(new double[weightsIH.getHeight()][weightsIH.getWidth()]);
+                dWhoPrev = (Matrix) dWho.clone();
+                dWhhPrev = (Matrix) dWhh.clone();
+                dWihPrev = (Matrix) dWih.clone();
+
+                dEdWho = new Matrix(new double[weightsHO.getHeight()][weightsHO.getWidth()]);
+                dEdWhh = new Matrix(new double[weightsHH.getHeight()][weightsHH.getWidth()]);
+                dEdWih = new Matrix(new double[weightsIH.getHeight()][weightsIH.getWidth()]);
+
                 for (int t = 1; t < inputs.length; t++) {
                     dEdWho = dEdWho.add(hiddenActivations[t].addBiasColumn().transpose().multiply(deltaO[t]));
                     dEdWhh = dEdWhh.add(hiddenActivations[t-1].transpose().multiply(deltaH[t]));
@@ -145,10 +163,15 @@ public class RNN {
                 }
                 Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose()).sumColumns();
 
+                // APPLY LEARNING RATE AND MOMENTUM
+                dWho = dWhoPrev.scalarMultiply(momentum).subtract(dEdWho.scalarMultiply(lR));
+                dWhh = dWhhPrev.scalarMultiply(momentum).subtract(dEdWhh.scalarMultiply(lR));
+                dWih = dWihPrev.scalarMultiply(momentum).subtract(dEdWih.scalarMultiply(lR));
+
                 // UPDATE WEIGHTS FROM HIDDEN TO OUTPUT
-                weightsHO = weightsHO.subtract(dEdWho.scalarMultiply(lR));
-                weightsHH = weightsHH.subtract(dEdWhh.scalarMultiply(lR));
-                weightsIH = weightsIH.subtract(dEdWih.scalarMultiply(lR));
+                weightsHO = weightsHO.add(dWho);
+                weightsHH = weightsHH.add(dWhh);
+                weightsIH = weightsIH.add(dWih);
 
                 // UPDATE INITIAL HIDDEN ACTIVATIONS
                 initialHiddenActs = initialHiddenActs.subtract(dEdH0.scalarMultiply(lR));
