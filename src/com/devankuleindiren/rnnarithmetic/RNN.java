@@ -64,10 +64,16 @@ public class RNN {
     // TRAIN THE RNN
     public double train (Matrix[][] inputTargetPairs, double lR, int iterationNo) throws MatrixDimensionMismatchException {
 
+        System.out.println("\nTraining RNN...\n");
+
         // SEPARATE INPUTS & TARGETS
         Matrix[] inputs = inputTargetPairs[0];
         Matrix[] targets = inputTargetPairs[1];
 
+        // GET NUMBER OF TRAINING SEQUENCES
+        int noOfTrainingSequences = inputs[0].getHeight();
+
+        // MATRICES TO STORE THE HIDDEN AND OUTPUT ACTIVATIONS
         Matrix[] hiddenActivations;
         Matrix[] outputActivations;
 
@@ -83,6 +89,14 @@ public class RNN {
         boolean trainSuccessful = false;
 
         while (!trainSuccessful) {
+
+            // CREATE REQUIRED MATRICES FILLED WITH ONES
+            Matrix outputOnes = Matrix.onesMatrix(noOfTrainingSequences, outputNeuronNo);
+            Matrix hiddenOnes = Matrix.onesMatrix(noOfTrainingSequences, hiddenNeuronNo);
+
+            // INITIALISE DELTA Os
+            deltaO[0] = new Matrix(new double[noOfTrainingSequences][outputNeuronNo]);
+
             for (int iteration = 0; iteration < iterationNo; iteration++) {
 
                 // PERFORM A FORWARD PASS THROUGH THE RNN
@@ -90,29 +104,24 @@ public class RNN {
                 hiddenActivations = inputToHidden(inputs);
                 outputActivations = hiddenToOutput(hiddenActivations);
 
-                // CREATE REQUIRED MATRICES FILLED WITH ONES
-                Matrix outputOnes = Matrix.onesMatrix(1, outputNeuronNo);
-                Matrix hiddenOnes = Matrix.onesMatrix(1, hiddenNeuronNo);
-
                 // COMPUTE DELTA Os AND OUTPUT ERROR
-                deltaO[0] = new Matrix(new double[1][outputNeuronNo]);
-
                 error = 0;
 
                 for (int t = 1; t < inputs.length; t++) {
 
                     // COMPUTE OUTPUT ERROR
-                    for (int k = 0; k < outputNeuronNo; k++) {
-                        error += Math.pow(targets[t].get(0, k) - outputActivations[t].get(0, k), 2);
+                    for (int tS = 0; tS < noOfTrainingSequences; tS++) {
+                        for (int k = 0; k < outputNeuronNo; k++) {
+                            error += Math.pow(targets[t].get(tS, k) - outputActivations[t].get(tS, k), 2);
+                        }
                     }
-
 
                     // COMPUTE DELTA O^T
                     deltaO[t] = targets[t].subtract(outputActivations[t]).multiplyEach(outputActivations[t]).multiplyEach(outputOnes.subtract(outputActivations[t])).scalarMultiply(-1.0);
                 }
 
                 // OCCASIONALLY DISPLAY ERROR
-                if (iteration % 10 == 0) {
+                if (iteration % 1000 == 0) {
                     System.out.println("Error measure: " + error);
                 }
 
@@ -134,7 +143,7 @@ public class RNN {
                     dEdWhh = dEdWhh.add(hiddenActivations[t-1].transpose().multiply(deltaH[t]));
                     dEdWih = dEdWih.add(inputs[t].transpose().multiply(deltaH[t]));
                 }
-                Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose());
+                Matrix dEdH0 = deltaH[1].multiply(weightsHH.transpose()).sumColumns();
 
                 // UPDATE WEIGHTS FROM HIDDEN TO OUTPUT
                 weightsHO = weightsHO.subtract(dEdWho.scalarMultiply(lR));
@@ -144,8 +153,9 @@ public class RNN {
                 // UPDATE INITIAL HIDDEN ACTIVATIONS
                 initialHiddenActs = initialHiddenActs.subtract(dEdH0.scalarMultiply(lR));
             }
-            if (error < 0.1) {
+            if (error < 0.01 * noOfTrainingSequences) {
                 trainSuccessful = true;
+                System.out.println("\nRNN trained.\n");
             } else {
                 System.out.println("Re-trying...");
                 initWeightsAndActs();
@@ -168,7 +178,14 @@ public class RNN {
     private Matrix[] inputToHidden (Matrix[] inputs) throws MatrixDimensionMismatchException {
 
         Matrix[] hiddenActivations = new Matrix[inputs.length];
-        hiddenActivations[0] = initialHiddenActs;
+
+        int noOfTrainingSequences = inputs[0].getHeight();
+        hiddenActivations[0] = new Matrix(noOfTrainingSequences, hiddenNeuronNo);
+        for (int tS = 0; tS < noOfTrainingSequences; tS++) {
+            for (int col = 0; col < hiddenNeuronNo; col++) {
+                hiddenActivations[0].set(tS, col, initialHiddenActs.get(0, col));
+            }
+        }
 
         for (int time = 1; time < inputs.length; time++) {
             hiddenActivations[time] = inputs[time].multiply(weightsIH).add(hiddenActivations[time - 1].multiply(weightsHH));
@@ -181,7 +198,9 @@ public class RNN {
     private Matrix[] hiddenToOutput (Matrix[] hiddenActivations) throws MatrixDimensionMismatchException {
 
         Matrix[] outputActivations = new Matrix[hiddenActivations.length];
-        outputActivations[0] = new Matrix(new double[1][outputNeuronNo]);
+
+        int noOfTrainingSequences = hiddenActivations[0].getHeight();
+        outputActivations[0] = new Matrix(new double[noOfTrainingSequences][outputNeuronNo]);
 
         for (int time = 1; time < hiddenActivations.length; time++) {
             outputActivations[time] = hiddenActivations[time].addBiasColumn().multiply(weightsHO);

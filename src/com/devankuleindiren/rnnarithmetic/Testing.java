@@ -26,7 +26,7 @@ public class Testing {
                 correct++;
             }
         }
-        System.out.println("The RNN got " + (int) correct + "/" + inputLength + " bits correct. (" + ((correct / inputLength) * 100) + "%)");
+        System.out.println("The RNN got " + (int) correct + "/" + inputLength + " bits correct. (" + ((correct / inputLength) * 100) + "%) \n\n");
     }
 
     public static void test (String input1, String input2) throws MatrixDimensionMismatchException {

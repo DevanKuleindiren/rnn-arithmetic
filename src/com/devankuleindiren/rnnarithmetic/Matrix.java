@@ -165,6 +165,18 @@ public class Matrix implements Cloneable {
         return result;
     }
 
+    public Matrix sumColumns () {
+        Matrix result = new Matrix(1, width);
+        for (int col = 0; col < width; col++) {
+            double sum = 0;
+            for (int row = 0; row < height; row++) {
+                sum += values[row][col];
+            }
+            result.values[0][col] = sum;
+        }
+        return result;
+    }
+
     @Override
     public Object clone () {
         Matrix clone = new Matrix (height, width);
