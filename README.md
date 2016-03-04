@@ -22,7 +22,7 @@ This RNN uses back propagation through time (BPTT) for training, and has the fol
 ![Structure](http://www.devankuleindiren.com/Images/RNN-Arithmetic.png "RNN Structure")
 
 ##Usage
-1. Download the [jar file](RNN-Arithmetic.jar).
+1. Download the [jar file](https://github.com/DevanKuleindiren/RNN-Arithmetic/blob/master/RNN-Arithmetic.jar?raw=true).
 2. In the directory containing the jar file, run:
 
     ```

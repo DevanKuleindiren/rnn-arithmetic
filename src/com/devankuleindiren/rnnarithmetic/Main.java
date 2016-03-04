@@ -12,6 +12,11 @@ public class Main {
 
         String command = "";
         Scanner scanner = new Scanner(System.in);
+
+        RNNTrainingParameters trainingParameters = new RNNTrainingParameters(0.005, 0.05, 10000);
+        RNNParameters rnnParameters = new RNNParameters(2, 3, 1, trainingParameters);
+        RNNMaster rnnMaster = new RNNMaster(rnnParameters, 5);
+
         while (!command.equals("q")) {
 
             System.out.print("RNN: ");
@@ -37,10 +42,8 @@ public class Main {
                 System.out.println("                                                        ");
             } else if (command.equals("train")) {
                 Matrix inputBatch[][] = InputGenerator.generateInput(10, 100);
-                RNN rnn = RNN.getInstance(2, 3, 1);
-
                 try {
-                    rnn.train(inputBatch, 0.005, 0.05, 10000);
+                    rnnMaster.train(inputBatch);
                 } catch (MatrixDimensionMismatchException e) {
                     System.out.println("Failed to train the RNN:");
                     System.out.println();
@@ -76,7 +79,7 @@ public class Main {
                         }
                         // GET RNN TO PERFORM ADDITION
                         try {
-                            Testing.test(arguments[1], arguments[2]);
+                            Testing.test(rnnMaster, arguments[1], arguments[2]);
                         } catch (MatrixDimensionMismatchException e) {
                             System.out.println("Test failed:");
                             System.out.println();
