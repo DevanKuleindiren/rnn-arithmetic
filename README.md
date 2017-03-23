@@ -1,7 +1,9 @@
 RNN Arithmetic
 ================
 
-##Description
+This project is described in detail [here](http://devankuleindiren.com/Projects/rnn_arithmetic.php).
+
+## Description
 This is a multilayer Recurrent Neural Network (RNN) that can learn how to perform basic arithmetic (binary addition so far).
 
 In other words, you can feed it two binary strings, X and Y, and a target string, T. In the case of binary addition, T = X+Y :
@@ -21,7 +23,7 @@ This RNN uses back propagation through time (BPTT) for training, and has the fol
 
 ![Structure](http://www.devankuleindiren.com/Images/RNN-Arithmetic.png "RNN Structure")
 
-##Usage
+## Usage
 1. Download the [jar file](https://github.com/DevanKuleindiren/RNN-Arithmetic/blob/master/RNN-Arithmetic.jar?raw=true).
 2. In the directory containing the jar file, run:
 
