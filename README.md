@@ -1,7 +1,7 @@
 RNN Arithmetic
 ================
 
-This project is described in detail [here](http://devankuleindiren.com/Projects/rnn_arithmetic.php).
+This project is described in detail [here](http://devankuleindiren.com/Projects/rnn_arithmetic.html).
 
 ## Description
 This is a multilayer Recurrent Neural Network (RNN) that can learn how to perform basic arithmetic (binary addition so far).
